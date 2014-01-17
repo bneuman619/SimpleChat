@@ -46,26 +46,50 @@ class Server
   #   client.puts("Welcome, #{username}")
   # end
 
-  def send_message(client, message)
-    client.puts message if message
-  end
-
-  def parse_message(input, client)
-    username = find_username(client)
-    
-    if !username
-      username = parse_welcome(input, client) 
-      "Welcome, #{username}"
-    else
-      message = input[:msg]
-      "#{username}: #{message}"
+  def send_to_all(message)
+    @clients.each do |username, client|
+      puts username
+      puts client
+      send_message(client, message)
     end
   end
 
-  def parse_welcome(input, client)
-    username = input[:msg].split(' ')[1]
+  def send_message(client, message)
+    puts "IN send_message"
+    puts message
+    puts message
+     #message
+      #message = parse_message(message)
+    client.puts(message )
+    #end
+    #puts message
+    puts " STILL IN send_message"
+  end
+
+  def parse_message(message, client)
+    return signon(message, client) if message.include? "SIGNON"
+
+    split_message = message.split(' ')
+    dest = split_message.shift(2)[1]
+    # if split_message.include? "SIGNON"
+    #   signon(message)
+    # else
+    message = split_message[1..-1].join(' ')
+    "#{dest}: #{message}"
+    #end
+  end
+
+  # def parse_welcome(input, client)
+  #   username = input[:msg].split(' ')[1]
+  #   @clients[username] = client
+  #   username
+  # end
+
+  def signon(message, client)
+    username = message.split(' ')[1]
     @clients[username] = client
-    username
+    puts "@clients is #{@clients}"
+    "Welcome, #{username}"
   end
 
   def main
@@ -79,11 +103,24 @@ class Server
         loop do
           puts "hope this thread persists"
           input = client.gets.chomp
-          puts input
+          puts "Got input!"
+          parsed = parse_message(input, client)
+          puts "Got parsed!"
+          puts parsed
+          #puts input
+          if parsed.include? "Welcome"
+            send_message(client, parsed)
+          else
+            send_to_all(parsed)
+          end
+            #send_message(client, parsed)
+          # else
+          #send_to_all(message)
+          #end
           #message = parse_message(input, client)
           #client.puts(input)
           #send_message(client, message)
-          break if input == "exit"
+          #break if input == "exit"
         end
         puts "looped ended unexpectedly"
 

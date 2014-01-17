@@ -13,6 +13,7 @@ class Client
   end
 
   def main
+    puts ARGV
     thr1 = Thread.start do
       puts "in thread 1"
       loop do
@@ -47,11 +48,11 @@ class Client
   end
 
   def send_message(message)
-    @socket.puts({dest: [], msg: message})
+    @socket.puts("DEST server MSG #{message}")
   end
 
   def send_welcome_message
-    @socket.puts({dest: ['server'], msg: "SIGNON #{@username}"})
+    @socket.puts("SIGNON #{@username}")
   end
 
   def socket_has_input?(socket)
@@ -59,7 +60,13 @@ class Client
   end
 end
 
-
-
-client = Client.new("Ben")
-client.main
+def ui
+  puts "Give user name"
+  username = gets.chomp
+  client = Client.new(username)
+  client.main
+end
+#USERNAME = ARGV[0]
+ui
+# client = Client.new('Ben')
+# client.main
