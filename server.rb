@@ -75,7 +75,10 @@ class Server
     #   signon(message)
     # else
     message = split_message[1..-1].join(' ')
-    "#{dest}: #{message}"
+    username = find_username(client)
+    #{}"#{message}"
+    # puts "username is #{username}"
+    "#{username}: #{message}"
     #end
   end
 
