@@ -70,22 +70,27 @@ class Server
 
   def main
     loop do
+      puts "pre thread"
       Thread.start(@server.accept) do |client|
         # username = start_connection(client)
         # puts username
         # send_welcome(username)
-
+        puts "in thread"
         loop do
+          puts "hope this thread persists"
           input = client.gets.chomp
-          message = parse_message(input, client)
+          puts input
+          #message = parse_message(input, client)
           #client.puts(input)
-          send_message(client, message)
+          #send_message(client, message)
           break if input == "exit"
         end
+        puts "looped ended unexpectedly"
 
       end
+      puts "thread didn't persist :("
     end
-
+    puts "outer looped died"
   end
 
 end

@@ -14,23 +14,33 @@ class Client
 
   def main
     thr1 = Thread.start do
+      puts "in thread 1"
       loop do
+        puts "thread 1 loop"
         input = gets.chomp
         send_message(input)
         break if input == "exit"
         # next unless input == "exit"
         # sleep 7; break
       end
+      puts "out of thread 1 loop"
     end
 
+    puts "thread 1 died :("
+
     thr2 = Thread.start do
+      puts "in thread 2"
       loop do
+        puts "thraed 2 loop"
         output = @socket.gets.chomp
         puts output
         break if output == "exit"
         #next unless output == "exit"
       end
+      puts "out of thread 2 loop"
     end
+
+    puts "thread 2 died:("
 
     thr1.join
     thr2.join
