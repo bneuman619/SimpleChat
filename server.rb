@@ -1,0 +1,96 @@
+require 'socket'
+
+# def server
+#   server = TCPServer.new('127.0.0.1', '20000')
+
+#   loop do
+#     tr = Thread.start(server.accept) do |client|
+#       client.puts "Hello !"
+#       loop do
+#         input = client.gets
+#         client.puts input if input
+#         #break if input == "exit"
+#       end
+#     end
+#   end
+
+  
+# end
+
+# server
+
+class Server
+  def initialize
+    @server = start_server
+    @clients = {}
+  end
+
+  def start_server
+    TCPServer.new('127.0.0.1', '20000')
+  end
+
+  def start_connection(client)
+    username = @server.gets.chomp
+    @clients[username] = client
+    username
+  end
+
+  def find_username(user)
+    @clients.each { |username, client| return username if user == client }
+
+    nil
+  end
+
+  # def send_welcome(username)
+  #   client = @clients[username]
+  #   client.puts("Welcome, #{username}")
+  # end
+
+  def send_message(client, message)
+    client.puts message if message
+  end
+
+  def parse_message(input, client)
+    username = find_username(client)
+    
+    if !username
+      username = parse_welcome(input, client) 
+      "Welcome, #{username}"
+    else
+      message = input[:msg]
+      "#{username}: #{message}"
+    end
+  end
+
+  def parse_welcome(input, client)
+    username = input[:msg].split(' ')[1]
+    @clients[username] = client
+    username
+  end
+
+  def main
+    loop do
+      Thread.start(@server.accept) do |client|
+        # username = start_connection(client)
+        # puts username
+        # send_welcome(username)
+
+        loop do
+          input = client.gets.chomp
+          message = parse_message(input, client)
+          #client.puts(input)
+          send_message(client, message)
+          break if input == "exit"
+        end
+
+      end
+    end
+
+  end
+
+end
+
+server = Server.new
+server.main
+
+
