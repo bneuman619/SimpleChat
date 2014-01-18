@@ -1,28 +1,10 @@
 require 'socket'
 
-# def server
-#   server = TCPServer.new('127.0.0.1', '20000')
-
-#   loop do
-#     tr = Thread.start(server.accept) do |client|
-#       client.puts "Hello !"
-#       loop do
-#         input = client.gets
-#         client.puts input if input
-#         #break if input == "exit"
-#       end
-#     end
-#   end
-
-  
-# end
-
-# server
-
 class Server
   def initialize
     @server = start_server
     @clients = {}
+    @chat_history = []
   end
 
   def start_server
@@ -95,6 +77,11 @@ class Server
     "Welcome, #{username}"
   end
 
+  def send_history(client)
+    history = "HISTORY\n" + @chat_history.join("\n")
+    send_message(client, history)
+  end
+  
   def main
     loop do
       puts "pre thread"
@@ -110,9 +97,12 @@ class Server
           parsed = parse_message(input, client)
           puts "Got parsed!"
           puts parsed
+          @chat_history << parsed
+          puts @chat_history
           #puts input
           if parsed.include? "Welcome"
             send_message(client, parsed)
+            send_history(client)
           else
             send_to_all(parsed)
           end
