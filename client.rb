@@ -5,11 +5,20 @@ class Client
   def initialize(username)
     @username = username
     @socket = make_socket
-    send_welcome_message
+    start_connection
   end
 
   def make_socket
     TCPSocket.new('127.0.0.1', '20000')
+  end
+
+  def start_connection
+    loop do
+      break if @socket.gets.chomp == "SIGNON"
+    end
+
+    send_welcome_message
+    main
   end
 
   def main
@@ -18,7 +27,7 @@ class Client
       loop do
         #puts "thread 1 loop"
         input = gets.chomp
-        send_message(input)
+        send_message("main", input)
         break if input == "exit"
         # next unless input == "exit"
         # sleep 7; break
@@ -34,7 +43,7 @@ class Client
         #puts "thraed 2 loop"
         output = @socket.gets.chomp
         puts output
-        break if output == "exit"
+        #break if output == "exit"
         #next unless output == "exit"
       end
       #puts "out of thread 2 loop"
@@ -46,8 +55,19 @@ class Client
     thr2.join
   end
 
-  def send_message(message)
-    @socket.puts("DEST server MSG #{message}")
+  # def parse_message(input)
+  #   if input =~ /^\/MSG/
+  #     split_message = input.split(' ')
+  #     dest = split_message[1]
+  #     message = split_message[1..-1].join(' ')
+  #     send_message(dest, message)
+  #   else
+  #     send_message("main", message)
+  #   end
+  # end
+
+  def send_message(dest, message)
+    @socket.puts("DEST #{dest} MSG #{message}")
   end
 
   def send_welcome_message
@@ -63,7 +83,6 @@ def ui
   puts "Give user name"
   username = gets.chomp
   client = Client.new(username)
-  client.main
 end
 #USERNAME = ARGV[0]
 ui
