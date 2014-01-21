@@ -13,10 +13,11 @@ class Client
   end
 
   def start_connection
+    puts "Entering signon loop"
     loop do
       break if @socket.gets.chomp == "SIGNON"
     end
-
+    puts "Leaving signon loop"
     send_signon_message
     main
   end
@@ -25,15 +26,16 @@ class Client
     thr1 = Thread.start do
       loop do
         input = gets.chomp
-        send_message("main", input)
+        send_message("#main", input)
         break if input == "exit"
       end
     end
 
     thr2 = Thread.start do
       loop do
-        output = @socket.gets.chomp
-        puts output
+        incoming_message = @socket.gets.chomp
+        message = parse_incoming_message(message)
+        puts message
       end
     end
 
@@ -41,12 +43,17 @@ class Client
     thr2.join
   end
 
+  def parse_incoming_message(message)
+    from = message.split(' ')[1]
+    msg = message.split(' ')[3..-1]
+    "#{from.upcase}: #{msg}"
+  end
+
   def send_message(dest, message)
     @socket.puts("DEST #{dest} MSG #{message}")
   end
 
   def send_signon_message
-    puts "Sending signog message"
     @socket.puts("SIGNON #{@username}")
   end
 end

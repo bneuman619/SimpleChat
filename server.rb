@@ -10,7 +10,9 @@ class Chatroom
 
   def add_user(user)
     @users << user
+    puts @users
     send_message("#{user.username} joined #{@name}")
+    puts "after send" + user
     user.send_message(get_history)
   end
 
@@ -24,19 +26,22 @@ class Chatroom
 
   def get_history
     if @chat_history.size > 10
-      @chat_history[-11..-1]
+      @chat_history[-11..-1].join(' ')
 
     else
-      @chat_history
+      @chat_history.join(' ')
     end
   end
 
   def send_message(message)
-    chat_message = "#{@name.upcase}    #{message}"
     @chat_history << message
-
+    puts "Added chat history"
     @users.each do |user|
-      user.send_message(chat_message)
+      puts "In each!"
+      puts user
+      puts message
+      user.send_message(message)
+      puts "Sent message"
     end
   end
 end
@@ -49,6 +54,7 @@ class User
   end
 
   def send_message(message)
+    puts "IN SM"
     @socket.puts(message)
   end
 
@@ -57,6 +63,7 @@ class User
   end
 
   def get_input
+    puts "In get_input"
     @socket.gets.chomp
   end
 end
@@ -65,7 +72,7 @@ end
 class Server
   def initialize
     @server = start_server
-    @chats = [Chatroom.new("main")]
+    @chats = [Chatroom.new("#main")]
     puts @chats
     @clients = {}
     @users = []
@@ -93,54 +100,31 @@ class Server
   end
 
   def start_connection(client)
+    puts "startconection"
     client.puts("SIGNON")
     signon = client.gets.chomp
+    puts signon
     username = signon.split(' ')[1..-1].join(' ')
+    puts username
     user = User.new(username, client)
+    puts user
     @users << user
+    puts @users
     @chats[0].add_user(user)
+    puts @chats
     user.send_welcome_msg
     user
   end
 
   def parse_message(message, user)
-    split_message = message.split(' ')
-    dest = split_message.shift(2)[1].chomp
-    message = split_message[1..-1].join(' ')
-
-    if message =~ /^PVT/
-      puts "private!"
-      private_message(message, user)
-      return
-    end
-
-    chatroom = @chats.find { |chat| chat.name == dest }
-
-    if chatroom.nil?
-      user.send_message("No chatroom #{dest}")
-      return
-    end
-
-    
-    puts message
-    message = "#{user.username}: #{message}"
-    chatroom.send_message(message)
+    msg = message.split(' ')[3..-1]
+    "#{user.username}: #{msg}"
   end
 
-  def private_message(message, user)
-    split_message = message.split(' ')
-    dest = split_message.shift(2)[1].chomp
-    user_dest = @users.find { |user| user.username == dest }
-
-    if user.nil?
-      user.send_message("No user #{user}")
-      return
-    end
-
-    message = split_message.join(' ')
-    puts message
-    message = "#{user.username}: #{message}"
-    user_dest.send_message(message)
+  def find_destination(dest)
+    @users.each { |user| return user if user.username.downcase == dest }
+    @chats.each { |chat| return chat if chat.name.downcase == dest }
+    return nil
   end
 
   def main
@@ -150,9 +134,18 @@ class Server
         user = start_connection(client)
       
         loop do
+          puts "Before input??"
           input = user.get_input
-          puts input
-          parse_message(input, user)
+          puts "input #{input}"
+          message = parse_message(input, user)
+          puts "message #{message}"
+          dest = find_destination(input)
+          puts "dest #{dest}"
+          if dest.nil?
+            user.send_message("No channel #{dest}")
+          else
+            dest.send_message(message)
+          end
         end
 
       thr.join
