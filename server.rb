@@ -10,10 +10,11 @@ class Chatroom
 
   def add_user(user)
     @users << user
-    puts @users
+
     send_message("#{user.username} joined #{@name}")
-    puts "after send" + user
-    user.send_message(get_history)
+
+    #user.send_message(get_history)
+  
   end
 
   def delete_user(user)
@@ -34,14 +35,10 @@ class Chatroom
   end
 
   def send_message(message)
+    message = "FROM #{@name} MSG #{message}"
     @chat_history << message
-    puts "Added chat history"
     @users.each do |user|
-      puts "In each!"
-      puts user
-      puts message
       user.send_message(message)
-      puts "Sent message"
     end
   end
 end
@@ -54,20 +51,22 @@ class User
   end
 
   def send_message(message)
-    puts "IN SM"
     @socket.puts(message)
   end
 
   def send_welcome_msg
-    send_message("Welcome, #{@username}")
+    send_message("FROM #main MSG Welcome, #{@username}")
   end
 
   def get_input
-    puts "In get_input"
     @socket.gets.chomp
   end
-end
 
+  def mark_alive
+    puts "#{@username} ALIVE"
+  end
+
+end
 
 class Server
   def initialize
@@ -100,29 +99,24 @@ class Server
   end
 
   def start_connection(client)
-    puts "startconection"
     client.puts("SIGNON")
     signon = client.gets.chomp
-    puts signon
     username = signon.split(' ')[1..-1].join(' ')
-    puts username
     user = User.new(username, client)
-    puts user
     @users << user
-    puts @users
     @chats[0].add_user(user)
-    puts @chats
     user.send_welcome_msg
     user
   end
 
   def parse_message(message, user)
-    msg = message.split(' ')[3..-1]
+    msg = message.split(' ')[3..-1].join(' ')
     "#{user.username}: #{msg}"
   end
 
-  def find_destination(dest)
-    @users.each { |user| return user if user.username.downcase == dest }
+  def find_destination(message)
+    dest = message.split(' ')[1]
+    @users.each { |user| puts user.username; return user if user.username.downcase == dest }
     @chats.each { |chat| return chat if chat.name.downcase == dest }
     return nil
   end
@@ -131,21 +125,28 @@ class Server
     loop do
      
       thr = Thread.start(@server.accept) do |client|
+       
         user = start_connection(client)
-      
+       
         loop do
-          puts "Before input??"
+          puts "Top of loop"          
           input = user.get_input
-          puts "input #{input}"
-          message = parse_message(input, user)
-          puts "message #{message}"
-          dest = find_destination(input)
-          puts "dest #{dest}"
-          if dest.nil?
-            user.send_message("No channel #{dest}")
+          puts input
+
+          if input == "ALIVE"
+            user.mark_alive
+          
           else
-            dest.send_message(message)
+
+            message = parse_message(input, user)
+            dest = find_destination(input)
+            if dest.nil?
+              user.send_message("No channel #{dest}")
+            else
+              dest.send_message(message)
+            end
           end
+          
         end
 
       thr.join
@@ -158,10 +159,10 @@ server = Server.new
 server.main
 
 
- def send_message(client, message)
-    puts message
-    user = find_user_by_socket(client)
-    puts user
-    user.send_msg(message)
-  end
+ # def send_message(client, message)
+ #    puts message
+ #    user = find_user_by_socket(client)
+ #    puts user
+ #    user.send_msg(message)
+ #  end
 
