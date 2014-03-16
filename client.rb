@@ -74,7 +74,7 @@ def ui
 end
 
 ui
-/msg #channel
+# /msg #channel
 
 
   # def parse_message(input)
